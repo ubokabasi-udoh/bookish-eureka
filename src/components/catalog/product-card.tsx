@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { canPurchase } from "@/domain/availability";
+import { canPurchase, maxPurchasable } from "@/domain/availability";
 import type { Product } from "@/domain/entities";
+import { QuickAddButton } from "@/features/cart/quick-add-button";
 import { cn } from "@/lib/utils";
 import { Price } from "./price";
 import { StockBadge } from "./stock-badge";
@@ -14,6 +15,7 @@ export function ProductCard({ product, priority = false }: { product: Product; p
           src={product.imageUrl}
           alt={product.name}
           fill
+          unoptimized
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
           priority={priority}
           className={cn("object-cover transition-transform duration-300 group-hover:scale-[1.03]", !canPurchase(product) && "opacity-60")}
@@ -31,6 +33,7 @@ export function ProductCard({ product, priority = false }: { product: Product; p
           <Price cents={product.priceCents} currency={product.currency} />
           <StockBadge product={product} />
         </div>
+        <QuickAddButton productId={product.id} productName={product.name} maxQuantity={maxPurchasable(product)} />
       </div>
     </article>
   );

@@ -1,4 +1,6 @@
+import { z } from "zod";
 import type { Product } from "@/domain/entities";
+import { MAX_CART_LINES } from "@/domain/schemas/checkout";
 import { normalizeSearchTerm } from "@/domain/search";
 import type { Services } from "../services";
 
@@ -34,4 +36,17 @@ export async function getProductDetail(services: Pick<Services, "products">, slu
 export async function getHomeData(services: Pick<Services, "products">) {
   const [featured, categories] = await Promise.all([services.products.listFeatured(8), services.products.listCategories()]);
   return { featured, categories };
+}
+
+const cartIdsSchema = z.array(z.uuid()).max(MAX_CART_LINES, "That is more items than we can show at once.");
+
+/**
+ * Resolves the browser's cart ids to authoritative product records (price and stock included).
+ * Invalid or excessive input resolves to an empty list instead of an error: a tampered cart
+ * simply renders as empty, and the server re-validates everything again at checkout.
+ */
+export async function getProductsByIds(services: Pick<Services, "products">, ids: unknown): Promise<Product[]> {
+  const parsed = cartIdsSchema.safeParse(ids);
+  if (!parsed.success) return [];
+  return services.products.getByIds(parsed.data);
 }

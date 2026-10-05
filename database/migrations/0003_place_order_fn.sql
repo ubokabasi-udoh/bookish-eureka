@@ -20,7 +20,7 @@ declare
   v_order_id  uuid;
   v_subtotal  integer := 0;
   v_currency  char(3);
-begina
+begin
   if p_items is null or jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
     raise exception 'EMPTY_CART';
   end if;

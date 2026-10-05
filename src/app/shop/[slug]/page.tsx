@@ -8,6 +8,8 @@ import { Price } from "@/components/catalog/price";
 import { ProductGrid } from "@/components/catalog/product-grid";
 import { StockBadge } from "@/components/catalog/stock-badge";
 import { Container } from "@/components/ui/container";
+import { getAvailability, maxPurchasable, LOW_STOCK_THRESHOLD } from "@/domain/availability";
+import { AddToCart } from "@/features/cart/add-to-cart";
 import { getServices } from "@/integrations/container";
 
 // Shared by generateMetadata and the page so the database is queried once per request.
@@ -25,6 +27,8 @@ export default async function ProductPage({ params }: PageProps<"/shop/[slug]">)
   const detail = await loadProduct(slug);
   if (!detail) notFound();
   const { product, related } = detail;
+  const availability = getAvailability(product);
+  const unavailableReason = availability === "unavailable" ? "No longer available" : "Out of stock";
 
   return (
     <Container className="py-8 sm:py-12">
@@ -40,7 +44,7 @@ export default async function ProductPage({ params }: PageProps<"/shop/[slug]">)
 
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
         <div className="relative aspect-square overflow-hidden rounded-3xl border border-line bg-brand-soft">
-          <Image src={product.imageUrl} alt={product.name} fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
+          <Image src={product.imageUrl} alt={product.name} fill priority unoptimized sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
         </div>
 
         <div className="flex flex-col gap-6">
@@ -58,6 +62,17 @@ export default async function ProductPage({ params }: PageProps<"/shop/[slug]">)
             <StockBadge product={product} showCount />
           </div>
           <p className="max-w-prose leading-relaxed text-ink/80">{product.description}</p>
+          <AddToCart
+            productId={product.id}
+            productName={product.name}
+            maxQuantity={maxPurchasable(product)}
+            unavailableReason={unavailableReason}
+          />
+          {availability === "low_stock" && (
+            <p className="text-sm font-medium text-warning" aria-live="polite">
+              Low stock: only {product.stockQuantity} left (fewer than {LOW_STOCK_THRESHOLD + 1}).
+            </p>
+          )}
           <dl className="grid grid-cols-2 gap-4 border-t border-line pt-6 text-sm">
             <div><dt className="text-muted">Category</dt><dd className="font-medium">{product.category}</dd></div>
             {product.sku && <div><dt className="text-muted">SKU</dt><dd className="font-medium">{product.sku}</dd></div>}

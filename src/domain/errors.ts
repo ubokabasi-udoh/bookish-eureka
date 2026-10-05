@@ -57,6 +57,11 @@ export class RepositoryError extends DomainError {
     super("REPOSITORY", message, { cause });
   }
 }
+export class CurrencyMismatchError extends DomainError {
+  constructor() {
+    super("CURRENCY_MISMATCH", "All items in an order must use the same currency.");
+  }
+}
 export class AuthProviderError extends DomainError {
   constructor(message: string, cause?: unknown) {
     super("AUTH_PROVIDER", message, { cause });

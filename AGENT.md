@@ -172,14 +172,14 @@ All external services live exclusively in `src/integrations/**`.
 | 3 | Database schema | ✅ Completed |
 | 4 | Authentication | 🟡 Implemented (Supabase+Google adapter, memory adapter, proxy, sign-in page, callback, actions). Memory flow verified; **live Google/Supabase flow NOT verified** (needs human credentials). |
 | 5 | Product / catalog | 🟡 Implemented (repositories, shop, product page, home, loading/empty/error states). 69 tests pass; HTTP verification of pages in progress. Add-to-cart UI arrives in step 6. |
-| 6 | Cart | ⬜ Not started |
-| 7 | Checkout | ⬜ Not started |
-| 8 | Order persistence | ⬜ Not started |
-| 9 | Email integration | ⬜ Not started |
-| 10 | UI states and validation | ⬜ Not started |
-| 11 | Testing | ⬜ Not started |
-| 12 | Documentation | ⬜ Not started |
-| 13 | Final verification | ⬜ Not started |
+| 6 | Cart | ✅ Implemented: pure `domain/cart.ts`, Zustand+persist store (ids and quantities only), hydration-safe hooks, add-to-cart / quick-add / stepper / header indicator, cart page with live stock reconciliation. Unit tested. |
+| 7 | Checkout | ✅ Implemented: shared Zod schema, React Hook Form, auth-gated page with return path, prefilled name/email, empty-cart and unavailable-item guards. Schema unit tested. |
+| 8 | Order persistence | ✅ Implemented: `placeOrder` use case, Supabase (`place_order` RPC) and memory order repositories, server action, `/orders/[id]` page scoped to the owner. Integration tested on the memory adapter and on real Postgres (PGlite). **Not run against a live Supabase project.** |
+| 9 | Email integration | ✅ Implemented: Mailgun REST adapter, mock adapter, escaped HTML + text template, failure-tolerant status recording. Unit/integration tested with the mock. **Mailgun NOT verified against the real service.** |
+| 10 | UI states and validation | 🟡 Mostly done: home sections, mobile nav, toaster, skeletons, 404 and error pages, accessible form errors. Responsive widths (375/768/1024/1440) **not manually verified**. |
+| 11 | Testing | 🟡 121 Vitest tests pass (unit + integration, incl. migrations on PGlite). Playwright E2E written (`tests/e2e`): catalog/cart specs pass (4/4); the 3 sign-in → checkout specs were still failing when work stopped (redirect back to `/checkout` after the fake Google sign-in) and were not finished. |
+| 12 | Documentation | ✅ README rewritten (see Change Log). |
+| 13 | Final verification | 🟡 `lint`, `typecheck`, `test` pass; `build` result recorded in the README/summary. Live Google/Supabase/Mailgun flows **unverified** (need human credentials). |
 
 ## Change Log
 
@@ -201,3 +201,13 @@ All external services live exclusively in `src/integrations/**`.
 | 2026-10-02 | `SiteHeader` calls `connection()` so all routes render on demand | Auth state is per-request; static prerendering would run data queries at build time and break builds without credentials. |
 | 2026-10-02 | Memory driver blocked in production unless `ALLOW_MEMORY_DRIVER=true` | Prevents accidentally shipping fake auth. |
 | 2026-10-02 | Catalog pages and home are built in step 5 (home polish, promo section, mobile nav remain in step 10) | Needed to exercise the catalog end to end. |
+| 2026-10-02 | **Bug fix:** `begina` typo in `0003_place_order_fn.sql` changed to `begin` | The migration failed to parse; this broke the PGlite migration test suite. |
+| 2026-10-02 | Added `src/features/**` (cart, checkout) with client components; `features/cart/cart-actions.ts` is a server action returning products by id | Plan listed `features/*`; cart needs authoritative prices/stock without trusting the browser. |
+| 2026-10-02 | `CurrencyMismatchError` added to the domain errors; `Services` gained `orders` and `email` | Order creation and email ports are now wired through the composition root. |
+| 2026-10-02 | Order creation is delegated entirely to the `place_order` RPC; the use case also pre-reads products for friendly errors | Prices are never computed in TypeScript for real orders; the pre-read is only for messages and cannot oversell. |
+| 2026-10-02 | Email is sent from `placeOrder` after the order commits and never throws; failures set `email_status='failed'` + `email_error` | Per plan step 9. |
+| 2026-10-02 | Product images use `next/image` with `unoptimized` | SVGs are served as-is from `/public/products`; avoids enabling `dangerouslyAllowSVG`. |
+| 2026-10-02 | Removed per-route `loading.tsx`/`error.tsx` under `orders/[id]` | A Suspense boundary above `notFound()` makes Next return HTTP 200 for missing orders; real 404s were chosen (same decision as the product page). |
+| 2026-10-02 | `next.config.ts` reads `NEXT_DIST_DIR`; Playwright uses `.next-e2e` and `localhost:3100` | Next 16 allows one dev server per build dir, and blocks dev assets for `127.0.0.1`. |
+| 2026-10-02 | Checkout schema messages customised (`Full name is required.` etc.) | Zod 4 reports `invalid_type` before `min` for missing fields. |
+| 2026-10-02 | Remaining E2E sign-in specs left unfinished by request | Time-boxed; unit/integration coverage is complete and the manual flow is documented in the README. |

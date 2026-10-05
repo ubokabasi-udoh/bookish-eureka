@@ -41,3 +41,21 @@ export function getSupabaseConfig(env: NodeJS.ProcessEnv = process.env): Supabas
 export function getSupabaseServiceRoleKey(env: NodeJS.ProcessEnv = process.env): string {
   return requireVars(env, ["SUPABASE_SERVICE_ROLE_KEY"], "Supabase (server)").SUPABASE_SERVICE_ROLE_KEY;
 }
+
+export interface MailgunConfig {
+  apiKey: string;
+  domain: string;
+  fromEmail: string;
+  baseUrl: string;
+}
+
+export function getMailgunConfig(env: NodeJS.ProcessEnv = process.env): MailgunConfig {
+  const v = requireVars(env, ["MAILGUN_API_KEY", "MAILGUN_DOMAIN", "MAILGUN_FROM_EMAIL"], "Mailgun");
+  return {
+    apiKey: v.MAILGUN_API_KEY,
+    domain: v.MAILGUN_DOMAIN,
+    fromEmail: v.MAILGUN_FROM_EMAIL,
+    // EU-region domains use https://api.eu.mailgun.net. Trailing slashes are stripped for safe joining.
+    baseUrl: (env.MAILGUN_API_BASE_URL?.trim() || "https://api.mailgun.net").replace(/\/+$/, ""),
+  };
+}

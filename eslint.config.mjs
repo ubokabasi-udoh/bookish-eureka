@@ -19,7 +19,7 @@ const adapterPatterns = [
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "playwright-report/**", "test-results/**"]),
+  globalIgnores([".next/**", ".next-e2e/**", "out/**", "build/**", "next-env.d.ts", "playwright-report/**", "test-results/**"]),
   {
     // Integration boundary: vendor SDKs and concrete adapters stay at the edge.
     files: ["src/**/*.{ts,tsx}"],

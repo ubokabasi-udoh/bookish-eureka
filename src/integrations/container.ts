@@ -7,11 +7,14 @@ import {
   createPublicClient,
   createServiceClient,
   getSharedMemoryStore,
+  MemoryOrderRepository,
   MemoryProductRepository,
   MemoryProfileRepository,
+  SupabaseOrderRepository,
   SupabaseProductRepository,
   SupabaseProfileRepository,
 } from "./database";
+import { getSharedMockEmailService, MailgunEmailService } from "./email";
 
 /**
  * COMPOSITION ROOT — the only place that decides which adapter implements each port.
@@ -23,13 +26,18 @@ function build(): Services {
     return {
       products: new MemoryProductRepository(store),
       profiles: new MemoryProfileRepository(store),
+      orders: new MemoryOrderRepository(store),
       auth: new MemoryAuthService(),
+      email: getSharedMockEmailService(),
     };
   }
+  const serviceClient = createServiceClient();
   return {
     products: new SupabaseProductRepository(createPublicClient()),
-    profiles: new SupabaseProfileRepository(createServiceClient()),
+    profiles: new SupabaseProfileRepository(serviceClient),
+    orders: new SupabaseOrderRepository(serviceClient),
     auth: new SupabaseGoogleAuthService(),
+    email: new MailgunEmailService(),
   };
 }
 

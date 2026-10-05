@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Product, Profile } from "@/domain/entities";
+import type { Order, OrderItem, Product, Profile } from "@/domain/entities";
 
 export const productRowSchema = z.object({
   id: z.string(),
@@ -53,4 +53,84 @@ export type ProfileRow = z.infer<typeof profileRowSchema>;
 
 export function mapProfileRow(row: ProfileRow): Profile {
   return { id: row.id, email: row.email, fullName: row.full_name, avatarUrl: row.avatar_url };
+}
+
+export const orderRowSchema = z.object({
+  id: z.string(),
+  user_id: z.string(),
+  status: z.enum(["confirmed", "cancelled"]),
+  subtotal_cents: z.number().int(),
+  total_cents: z.number().int(),
+  currency: z.string(),
+  customer_name: z.string(),
+  customer_email: z.string(),
+  customer_phone: z.string().nullable(),
+  shipping_line1: z.string(),
+  shipping_line2: z.string().nullable(),
+  shipping_city: z.string(),
+  shipping_region: z.string(),
+  shipping_postal_code: z.string(),
+  shipping_country: z.string(),
+  email_status: z.enum(["pending", "sent", "failed"]),
+  email_error: z.string().nullable(),
+  email_sent_at: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+export type OrderRow = z.infer<typeof orderRowSchema>;
+
+export const orderItemRowSchema = z.object({
+  id: z.string(),
+  order_id: z.string(),
+  product_id: z.string().nullable(),
+  product_name: z.string(),
+  unit_price_cents: z.number().int(),
+  quantity: z.number().int(),
+  subtotal_cents: z.number().int(),
+});
+export type OrderItemRow = z.infer<typeof orderItemRowSchema>;
+
+export const ORDER_COLUMNS =
+  "id, user_id, status, subtotal_cents, total_cents, currency, customer_name, customer_email, customer_phone, shipping_line1, shipping_line2, shipping_city, shipping_region, shipping_postal_code, shipping_country, email_status, email_error, email_sent_at, created_at, updated_at";
+
+export const ORDER_ITEM_COLUMNS = "id, order_id, product_id, product_name, unit_price_cents, quantity, subtotal_cents";
+
+export function mapOrderItemRow(row: OrderItemRow): OrderItem {
+  return {
+    id: row.id,
+    orderId: row.order_id,
+    productId: row.product_id,
+    productName: row.product_name,
+    unitPriceCents: row.unit_price_cents,
+    quantity: row.quantity,
+    subtotalCents: row.subtotal_cents,
+  };
+}
+
+export function mapOrderRow(row: OrderRow, items: OrderItem[]): Order {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    status: row.status,
+    subtotalCents: row.subtotal_cents,
+    totalCents: row.total_cents,
+    currency: row.currency.trim(),
+    customerName: row.customer_name,
+    customerEmail: row.customer_email,
+    customerPhone: row.customer_phone,
+    shippingAddress: {
+      line1: row.shipping_line1,
+      line2: row.shipping_line2,
+      city: row.shipping_city,
+      region: row.shipping_region,
+      postalCode: row.shipping_postal_code,
+      country: row.shipping_country,
+    },
+    emailStatus: row.email_status,
+    emailError: row.email_error,
+    emailSentAt: row.email_sent_at,
+    items,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
